@@ -30,7 +30,9 @@ class PiloApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pilo AI',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       home: const InventoryScreen(),
     );
   }

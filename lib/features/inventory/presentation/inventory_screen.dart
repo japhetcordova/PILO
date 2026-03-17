@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'pantry_providers.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+
 import '../../scanner/presentation/scanner_screen.dart';
 import '../../recipe/presentation/recipe_decision_screen.dart';
 
@@ -23,17 +25,34 @@ class InventoryScreen extends ConsumerWidget {
         ],
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const _PiloGreetingCard(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+            child: Text(
+              'YOUR PANTRY',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
+              ),
+            ),
+          ),
           Expanded(
             child: items.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.search, size: 64, color: Colors.white24),
+                        Opacity(
+                          opacity: 0.5,
+                          child: Image.asset('assets/images/pilo_pixel.png', width: 100, height: 100),
+                        ),
                         const SizedBox(height: 16),
-                        const Text('Your pantry is empty.'),
-                        const Text('Let Pilo help you find what to cook!', style: TextStyle(color: Colors.grey)),
+                        const Text('Your pantry looks lonely.'),
+                        const Text('Scan items and Pilo will find a recipe!', style: TextStyle(color: Colors.grey)),
                       ],
                     ),
                   )
@@ -56,13 +75,11 @@ class InventoryScreen extends ConsumerWidget {
             child: Column(
               children: [
                 ElevatedButton(
-                  onPressed: items.length < 3
-                      ? null
-                      : () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const RecipeDecisionScreen()),
-                          ),
-                  child: Text(items.length < 3 ? 'ADD ${3 - items.length} MORE ITEMS' : 'ASK PILO FOR A MEAL'),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RecipeDecisionScreen()),
+                  ),
+                  child: const Text('ASK PILO FOR A MEAL'),
                 ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
@@ -86,6 +103,64 @@ class InventoryScreen extends ConsumerWidget {
   }
 }
 
+class _PiloGreetingCard extends StatelessWidget {
+  const _PiloGreetingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Image.asset('assets/images/pilo_pixel.png', width: 48, height: 48),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Good morning, Chef!',
+                  style: GoogleFonts.outfit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'What can Pilo cook for you today?',
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PantryItemCard extends StatelessWidget {
   final dynamic item;
   const _PantryItemCard({required this.item});
@@ -95,24 +170,31 @@ class _PantryItemCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white10),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.restaurant, size: 40, color: Color(0xFFFF5722)),
-          const SizedBox(height: 8),
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            child: Icon(Icons.restaurant, size: 24, color: Theme.of(context).colorScheme.primary),
+          ),
+          const SizedBox(height: 12),
           Text(
             item.name.toUpperCase(),
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14),
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text(
             'In stock',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
+            style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey, letterSpacing: 0.5),
           ),
         ],
       ),

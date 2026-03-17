@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 
 class CookingModeScreen extends StatefulWidget {
   final String recipe;
@@ -54,14 +56,21 @@ class _CookingModeScreenState extends State<CookingModeScreen> {
             child: Padding(
               padding: const EdgeInsets.all(40.0),
               child: Center(
-                child: Text(
-                  _steps[_currentStep],
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w300,
-                    height: 1.4,
-                    color: Colors.white,
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                  child: Text(
+                    _steps[_currentStep],
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.outfit(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w300,
+                      height: 1.4,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -86,12 +95,13 @@ class _CookingModeScreenState extends State<CookingModeScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(200, 80),
-                    backgroundColor: const Color(0xFFFF5722),
+                    minimumSize: const Size(200, 70),
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   ),
                   child: Text(
                     _currentStep < _steps.length - 1 ? 'NEXT STEP' : 'LUTO NA!',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ),
                 const Spacer(),

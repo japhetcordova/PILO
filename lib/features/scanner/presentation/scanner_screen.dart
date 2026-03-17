@@ -14,6 +14,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   CameraController? _controller;
   final VisionService _visionService = VisionService();
   bool _isProcessing = false;
+  DateTime? _lastProcessedTime;
   List<DetectedObject> _objects = [];
 
   @override
@@ -37,8 +38,33 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   Future<void> _processImage(CameraImage image) async {
+    if (_isProcessing) return;
+    
+    // Throttle to 1 frame every 500ms
+    final currentTime = DateTime.now();
+    if (_lastProcessedTime != null && 
+        currentTime.difference(_lastProcessedTime!).inMilliseconds < 500) {
+      return;
+    }
+
     _isProcessing = true;
-    _isProcessing = false;
+    _lastProcessedTime = currentTime;
+
+    try {
+      final inputImage = _visionService.convertCameraImage(image, _controller!.description);
+      if (inputImage != null) {
+        final objects = await _visionService.processImage(inputImage);
+        if (mounted) {
+          setState(() {
+            _objects = objects;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Vision Error: $e');
+    } finally {
+      _isProcessing = false;
+    }
   }
 
   @override
@@ -85,10 +111,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: Colors.white24),
       ),
-      child: const Text(
-        'PILO IS SEARCHING...',
-        textAlign: TextAlign.center,
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset('assets/images/pilo_pixel.png', width: 40, height: 40),
+          const SizedBox(width: 16),
+          const Text(
+            'PILO IS SEARCHING...',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+          ),
+        ],
       ),
     );
   }
