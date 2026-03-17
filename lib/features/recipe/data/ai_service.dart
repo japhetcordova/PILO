@@ -13,18 +13,6 @@ class AiService {
       final modelPath = await BrainDownloader.localPath;
       final localFile = File(modelPath);
 
-      if (!(await localFile.exists())) {
-        // Try to auto-import from assets if the developer put it there
-        try {
-          final data = await rootBundle.load('assets/models/pilo_brain.bin');
-          final bytes = data.buffer.asUint8List();
-          await localFile.writeAsBytes(bytes);
-          debugPrint('Pilo: Brain auto-imported from assets! 🧠✨');
-        } catch (e) {
-          debugPrint('Pilo: No brain in assets, waiting for manual import.');
-        }
-      }
-
       if (await localFile.exists()) {
         _isLoaded = true; 
       }

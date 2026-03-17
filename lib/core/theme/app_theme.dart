@@ -20,9 +20,12 @@ class AppTheme {
         primary: primaryColor,
         secondary: accentColor,
         surface: surfaceColor,
-        onSurface: const Color(0xFF1A1C1E),
+        onSurface: Colors.black87,
       ),
-      textTheme: GoogleFonts.outfitTextTheme(),
+      textTheme: GoogleFonts.outfitTextTheme().apply(
+        bodyColor: Colors.black87,
+        displayColor: Colors.black87,
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: backgroundColor,
         foregroundColor: const Color(0xFF1A1C1E),

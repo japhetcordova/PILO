@@ -36,8 +36,14 @@ class BrainDownloader {
         },
       );
       onComplete();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        onError('Brain server is unreachable (404). Please use "Manual Import" for now!');
+      } else {
+        onError('Download failed: ${e.message}');
+      }
     } catch (e) {
-      onError(e.toString());
+      onError('An unexpected error occurred: $e');
     }
   }
 

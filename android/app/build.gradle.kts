@@ -37,6 +37,15 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    applicationVariants.all {
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.ApkVariantOutputImpl
+            val abi = output.getFilter(com.android.build.OutputFile.ABI)
+            val name = "pilo-v${defaultConfig.versionName}(${defaultConfig.versionCode})${if (abi != null) "-$abi" else ""}.apk"
+            output.outputFileName = name
+        }
+    }
 }
 
 flutter {
