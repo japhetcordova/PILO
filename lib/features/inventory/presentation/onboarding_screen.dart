@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../recipe/presentation/ai_provider.dart';
 import '../../recipe/data/brain_downloader.dart';
 import 'inventory_screen.dart';
@@ -18,6 +19,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final TextEditingController _nameController = TextEditingController();
   double _progress = 0;
   bool _isDownloading = false;
+  bool _hasError = false;
   String _downloadMessage = 'Pilo is setting up his chef hat...';
 
   Future<void> _saveName() async {
@@ -44,6 +46,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           onError: (e) {
             setState(() {
               _isDownloading = false;
+              _hasError = true;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Pilo got a headache: $e')),
               );
@@ -110,7 +113,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   color: Theme.of(context).primaryColor.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Image.asset('assets/images/pilo_pixel.png', width: 120, height: 120),
+                child: Image.asset(
+                  _hasError ? 'assets/images/pilo_sad.png' : 'assets/images/pilo_waving_hello.png', 
+                  width: 120, 
+                  height: 120
+                ),
               ),
               const SizedBox(height: 40),
               if (!_isDownloading) ...[
@@ -214,11 +221,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     ),
                     const Text(' • ', style: TextStyle(color: Colors.grey)),
                     TextButton(
-                      onPressed: () {
-                         // link previously provided in conversation
+                      onPressed: () async {
+                        final url = Uri.parse('https://www.kaggle.com/models/google/gemma/mediapipe/gemma-2b-it-gpu-int4');
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url);
+                        }
                       },
                       child: const Text('KAGGLE LINK'),
                       style: TextButton.styleFrom(foregroundColor: Colors.grey[700]),
+                    ),
+                    const Text(' • ', style: TextStyle(color: Colors.grey)),
+                    TextButton(
+                      onPressed: () => _navigateToMain(),
+                      child: const Text('SKIP FOR NOW'),
+                      style: TextButton.styleFrom(foregroundColor: Colors.orange[800]),
                     ),
                   ],
                 ),

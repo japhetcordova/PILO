@@ -5,7 +5,7 @@ import 'package:path/path.dart' as p;
 
 class BrainDownloader {
   static const String modelUrl = 
-      'https://storage.googleapis.com/pilo-ai-assets/models/gemma-2b-it-cpu-int4.bin'; // Example URL
+      'https://storage.googleapis.com/mediapipe-models/llm_inference/gemma-2b-it-gpu-int4/float16/1/gemma-2b-it-gpu-int4.bin';
   
   static Future<String> get localPath async {
     final directory = await getApplicationDocumentsDirectory();

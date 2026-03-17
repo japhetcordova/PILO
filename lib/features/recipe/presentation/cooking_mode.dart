@@ -40,76 +40,131 @@ class _CookingModeScreenState extends State<CookingModeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('KUSINA MODE'),
-        backgroundColor: Colors.black,
+        title: Text(
+          'KUSINA MODE',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, letterSpacing: 2),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
-      body: Column(
-        children: [
-          LinearProgressIndicator(
-            value: (_currentStep + 1) / _steps.length,
-            backgroundColor: Colors.white10,
-            color: const Color(0xFFFF5722),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1A1A1A), Colors.black],
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(40.0),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(32),
-                  ),
-                  child: Text(
-                    _steps[_currentStep],
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w300,
-                      height: 1.4,
-                      color: Colors.white,
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 100),
+            LinearProgressIndicator(
+              value: (_currentStep + 1) / _steps.length,
+              backgroundColor: Colors.white10,
+              color: const Color(0xFFFF5722),
+              minHeight: 6,
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Center(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 500),
+                    transitionBuilder: (Widget child, Animation<double> animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0.0, 0.1),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Container(
+                      key: ValueKey<int>(_currentStep),
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(32),
+                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 40,
+                            offset: const Offset(0, 20),
+                          ),
+                        ],
+                      ),
+                      child: SingleChildScrollView(
+                        child: Text(
+                          _steps[_currentStep],
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.outfit(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w400,
+                            height: 1.5,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Row(
-              children: [
-                if (_currentStep > 0)
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, size: 32, color: Colors.white70),
-                    onPressed: () => setState(() => _currentStep--),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
+              child: Row(
+                children: [
+                  if (_currentStep > 0)
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => setState(() => _currentStep--),
+                        borderRadius: BorderRadius.circular(50),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white24),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.arrow_back_ios_new, size: 24, color: Colors.white70),
+                        ),
+                      ),
+                    ),
+                  const Spacer(),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_currentStep < _steps.length - 1) {
+                        setState(() => _currentStep++);
+                      } else {
+                        Navigator.of(context).popUntil((route) => route.isFirst);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(200, 75),
+                      backgroundColor: const Color(0xFFFF5722),
+                      foregroundColor: Colors.white,
+                      elevation: 10,
+                      shadowColor: const Color(0xFFFF5722).withOpacity(0.4),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    ),
+                    child: Text(
+                      _currentStep < _steps.length - 1 ? 'NEXT STEP' : 'LUTO NA!',
+                      style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                const Spacer(),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_currentStep < _steps.length - 1) {
-                      setState(() => _currentStep++);
-                    } else {
-                      Navigator.of(context).popUntil((route) => route.isFirst);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(200, 70),
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  ),
-                  child: Text(
-                    _currentStep < _steps.length - 1 ? 'NEXT STEP' : 'LUTO NA!',
-                    style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ),
-                const Spacer(),
-                if (_currentStep > 0) const SizedBox(width: 48),
-              ],
+                  const Spacer(),
+                  if (_currentStep > 0) const SizedBox(width: 56),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

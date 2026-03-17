@@ -8,9 +8,8 @@ class VisionService {
   bool _isInitialized = false;
 
   Future<void> initialize() async {
-    const mode = DetectionMode.stream;
     final options = ObjectDetectorOptions(
-      mode: mode,
+      mode: DetectionMode.stream,
       classifyObjects: true,
       multipleObjects: true,
     );

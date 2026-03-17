@@ -50,8 +50,8 @@ class InventoryScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Opacity(
-                          opacity: 0.5,
-                          child: Image.asset('assets/images/pilo_pixel.png', width: 100, height: 100),
+                          opacity: 0.8,
+                          child: Image.asset('assets/images/pilo_sad.png', width: 120, height: 120),
                         ),
                         const SizedBox(height: 16),
                         const Text('Your pantry looks lonely.'),
@@ -134,20 +134,14 @@ class _PiloGreetingCard extends StatelessWidget {
               color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Image.asset('assets/images/pilo_pixel.png', width: 48, height: 48),
+            child: Image.asset('assets/images/pilo_normal.png', width: 48, height: 48),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Good morning, ${Hive.box('user_settings').get('user_name', defaultValue: 'Chef')}!',
-                  style: GoogleFonts.outfit(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                _buildDynamicGreeting(context),
                 Text(
                   'What can Pilo cook for you today?',
                   style: GoogleFonts.outfit(
@@ -159,6 +153,28 @@ class _PiloGreetingCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDynamicGreeting(BuildContext context) {
+    final hour = DateTime.now().hour;
+    String greeting;
+    if (hour < 12) {
+      greeting = 'Good morning';
+    } else if (hour < 17) {
+      greeting = 'Good afternoon';
+    } else {
+      greeting = 'Good evening';
+    }
+
+    final name = Hive.box('user_settings').get('user_name', defaultValue: 'Chef');
+
+    return Text(
+      '$greeting, $name!',
+      style: GoogleFonts.outfit(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
       ),
     );
   }
