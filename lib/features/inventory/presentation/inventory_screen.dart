@@ -12,6 +12,9 @@ import '../../recipe/data/brain_downloader.dart';
 import '../../recipe/presentation/brain_status_provider.dart';
 import '../../tracking/presentation/nutrition_dashboard_screen.dart';
 import '../../tracking/presentation/nutrition_provider.dart';
+import '../../tracking/presentation/widgets/water_streak_widget.dart';
+import 'settings_screen.dart';
+import 'settings_provider.dart';
 
 class InventoryScreen extends ConsumerWidget {
   const InventoryScreen({super.key});
@@ -20,11 +23,19 @@ class InventoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final items = ref.watch(filteredPantryItemsProvider);
     final activeGroup = ref.watch(selectedPantryGroupProvider);
+    final settings = ref.watch(settingsProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('PILO — KUSINA'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.analytics_outlined),
             onPressed: () => Navigator.push(
@@ -45,7 +56,11 @@ class InventoryScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _PiloGreetingCard(),
-          const _NutritionTipBox(),
+          if (settings.showMascotTips) const _NutritionTipBox(),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+            child: WaterTrackerWidget(),
+          ),
           const _PantryGroupTabs(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),

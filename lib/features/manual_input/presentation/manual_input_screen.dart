@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 import '../../inventory/presentation/pantry_providers.dart';
 import '../../inventory/domain/models/pantry_item.dart';
@@ -49,6 +50,8 @@ class _ManualInputScreenState extends ConsumerState<ManualInputScreen> {
 
     await ref.read(pantryItemsProvider.notifier).addItem(newItem);
     
+    final categoryName = _selectedCategory.name.toUpperCase();
+    
     // Clear the field for next input
     _controller.clear();
     setState(() {
@@ -59,7 +62,7 @@ class _ManualInputScreenState extends ConsumerState<ManualInputScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Added $text (${_selectedCategory.name.toUpperCase()}) to your $activeGroup pantry'),
+        content: Text('Added $text ($categoryName) to your $activeGroup pantry'),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
       ),
