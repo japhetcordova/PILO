@@ -131,9 +131,7 @@ class _RecipeDecisionScreenState extends ConsumerState<RecipeDecisionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('RECIPE DISCOVERY')),
-      body: _isLoading
+    return _isLoading
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -358,7 +356,6 @@ class _RecipeDecisionScreenState extends ConsumerState<RecipeDecisionScreen> {
                   ),
                 ],
               ),
-            ),
-    );
+            );
   }
 }

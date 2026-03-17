@@ -28,29 +28,6 @@ class InventoryScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('PILO — KUSINA'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.analytics_outlined),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const NutritionDashboardScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.calendar_month),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const MealCalendarScreen()),
-            ), 
-          ),
-        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,11 +64,12 @@ class InventoryScreen extends ConsumerWidget {
                         const SizedBox(height: 16),
                         const Text('Your pantry looks lonely.'),
                         const Text('Add ingredients and Pilo will find a recipe!', style: TextStyle(color: Colors.grey)),
+                        const SizedBox(height: 80), // Padding for FAB + NavBar
                       ],
                     ),
                   )
                 : GridView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 120), // Bottom padding for FAB + NavBar
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
@@ -103,33 +81,6 @@ class InventoryScreen extends ConsumerWidget {
                       return _PantryItemCard(item: item);
                     },
                   ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              children: [
-                ElevatedButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const RecipeDecisionScreen()),
-                  ),
-                  child: Text('ASK PILO FOR $activeGroup'),
-                ),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ManualInputScreen()),
-                  ),
-                  icon: const Icon(Icons.edit_note),
-                  label: Text('ADD TO $activeGroup'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -211,42 +162,84 @@ class _PiloGreetingCard extends StatelessWidget {
   }
 }
 
-class _PantryItemCard extends StatelessWidget {
+class _PantryItemCard extends ConsumerWidget {
   final dynamic item;
   const _PantryItemCard({required this.item});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+  Widget build(BuildContext context, WidgetRef ref) {
+    return GestureDetector(
+      onLongPress: () {
+        _showItemOptions(context, ref, item);
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+              child: Icon(Icons.restaurant, size: 24, color: Theme.of(context).colorScheme.primary),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              item.name.toUpperCase(),
+              style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 13),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'In stock',
+              style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey, letterSpacing: 0.5),
+            ),
+          ],
+        ),
       ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-            child: Icon(Icons.restaurant, size: 24, color: Theme.of(context).colorScheme.primary),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            item.name.toUpperCase(),
-            style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'In stock',
-            style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey, letterSpacing: 0.5),
-          ),
-        ],
+    );
+  }
+  
+  void _showItemOptions(BuildContext context, WidgetRef ref, dynamic i) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'OPTIONS FOR ${i.name.toUpperCase()}',
+                style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              title: Text('Remove from Pantry', style: GoogleFonts.outfit(color: Colors.redAccent)),
+              onTap: () {
+                ref.read(pantryItemsProvider.notifier).deleteItem(i.id);
+                Navigator.pop(ctx);
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }
@@ -267,28 +260,37 @@ class _PantryGroupTabs extends ConsumerWidget {
       child: Row(
         children: groups.map((group) {
           final isSelected = selectedGroup == group;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: ChoiceChip(
-              label: Text(group),
-              selected: isSelected,
-              onSelected: (selected) {
-                if (selected) {
-                  ref.read(selectedPantryGroupProvider.notifier).state = group;
-                }
-              },
-              labelStyle: GoogleFonts.outfit(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : Colors.black87,
+          return GestureDetector(
+            onTap: () {
+              ref.read(selectedPantryGroupProvider.notifier).state = group;
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.fastOutSlowIn,
+              margin: const EdgeInsets.only(right: 12.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(
+                color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(
+                  color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.withOpacity(0.2),
+                  width: 1.5,
+                ),
+                boxShadow: isSelected ? [
+                  BoxShadow(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  )
+                ] : [],
               ),
-              selectedColor: Theme.of(context).primaryColor,
-              backgroundColor: Colors.grey[200],
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+              child: Text(
+                group,
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : Colors.black87,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),

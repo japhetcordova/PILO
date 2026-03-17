@@ -39,9 +39,33 @@ class _CookingModeScreenState extends State<CookingModeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
+    return WillPopScope(
+      onWillPop: () async {
+        if (_currentStep == 0) return true;
+        
+        final shouldPop = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            title: Text('Stop Cooking?', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+            content: const Text('Are you sure you want to exit? Your progress will be lost.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('KEEP COOKING'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('EXIT', style: TextStyle(color: Colors.redAccent)),
+              ),
+            ],
+          ),
+        );
+        return shouldPop ?? false;
+      },
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
         title: Text(
           'KUSINA MODE',
           style: GoogleFonts.outfit(fontWeight: FontWeight.bold, letterSpacing: 2),
@@ -165,6 +189,7 @@ class _CookingModeScreenState extends State<CookingModeScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

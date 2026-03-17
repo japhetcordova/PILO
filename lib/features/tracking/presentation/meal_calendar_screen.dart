@@ -35,11 +35,7 @@ class _MealCalendarScreenState extends ConsumerState<MealCalendarScreen> {
     final allRecords = ref.watch(mealRecordsProvider);
     final selectedEvents = _selectedDay != null ? _getEventsForDay(_selectedDay!, allRecords) : [];
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('MEAL TRACKER'),
-      ),
-      body: Column(
+    return Column(
         children: [
           TableCalendar(
             firstDay: DateTime.utc(2024, 1, 1),
@@ -141,8 +137,7 @@ class _MealCalendarScreenState extends ConsumerState<MealCalendarScreen> {
               ),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 

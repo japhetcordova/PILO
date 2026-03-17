@@ -11,11 +11,7 @@ class NutritionDashboardScreen extends ConsumerWidget {
     final stats = ref.watch(weeklyNutritionStatsProvider);
     final mascotTip = ref.watch(mascotNutritionTipProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('NUTRITION INSIGHTS'),
-      ),
-      body: SingleChildScrollView(
+    return SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,7 +58,6 @@ class NutritionDashboardScreen extends ConsumerWidget {
             _buildCategoryGuide(context),
           ],
         ),
-      ),
     );
   }
 

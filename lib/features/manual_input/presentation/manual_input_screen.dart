@@ -7,7 +7,8 @@ import '../../inventory/domain/models/pantry_item.dart';
 import 'ingredient_training_screen.dart';
 
 class ManualInputScreen extends ConsumerStatefulWidget {
-  const ManualInputScreen({super.key});
+  final bool isModal;
+  const ManualInputScreen({super.key, this.isModal = false});
 
   @override
   ConsumerState<ManualInputScreen> createState() => _ManualInputScreenState();
@@ -76,134 +77,136 @@ class _ManualInputScreenState extends ConsumerState<ManualInputScreen> {
     final sortedItems = List<PantryItem>.from(allItems)
       ..sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Ingredients'),
-      ),
-      body: Column(
-        children: [
+    Widget content = Column(
+      children: [
+        if (!widget.isModal)
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'SELECT NUTRITION CATEGORY:',
-                  style: GoogleFonts.outfit(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: NutritionalCategory.values.map((cat) {
-                    final isSelected = _selectedCategory == cat;
-                    Color color = Colors.grey;
-                    if (cat == NutritionalCategory.go) color = Colors.orange;
-                    if (cat == NutritionalCategory.grow) color = Colors.redAccent;
-                    if (cat == NutritionalCategory.glow) color = Colors.green;
-
-                    return ChoiceChip(
-                      label: Text(cat.name.toUpperCase()),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() => _selectedCategory = selected ? cat : NutritionalCategory.unknown);
-                      },
-                      selectedColor: color.withOpacity(0.2),
-                      checkmarkColor: color,
-                      labelStyle: GoogleFonts.outfit(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? color : Colors.grey[600],
-                      ),
-                      side: BorderSide(
-                        color: isSelected ? color : Colors.transparent,
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        focusNode: _focusNode,
-                        decoration: InputDecoration(
-                          hintText: 'e.g., Kangkong, Pork Belly...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          filled: true,
-                          fillColor: Theme.of(context).colorScheme.surface,
-                        ),
-                        onSubmitted: (_) => _addIngredient(),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: _addIngredient,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
-                        minimumSize: const Size(60, 60),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Icon(Icons.add),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            padding: const EdgeInsets.only(top: 16.0),
+            child: Text('ADD INGREDIENTS', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'RECENTLY ADDED',
-                style: TextStyle(
-                  fontSize: 12,
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'SELECT NUTRITION CATEGORY:',
+                style: GoogleFonts.outfit(
+                  fontSize: 10,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
                   color: Colors.grey,
                 ),
               ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: NutritionalCategory.values.map((cat) {
+                  final isSelected = _selectedCategory == cat;
+                  Color color = Colors.grey;
+                  if (cat == NutritionalCategory.go) color = Colors.orange;
+                  if (cat == NutritionalCategory.grow) color = Colors.redAccent;
+                  if (cat == NutritionalCategory.glow) color = Colors.green;
+
+                  return ChoiceChip(
+                    label: Text(cat.name.toUpperCase()),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() => _selectedCategory = selected ? cat : NutritionalCategory.unknown);
+                    },
+                    selectedColor: color.withOpacity(0.2),
+                    checkmarkColor: color,
+                    labelStyle: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? color : Colors.grey[600],
+                    ),
+                    side: BorderSide(
+                      color: isSelected ? color : Colors.transparent,
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      decoration: InputDecoration(
+                        hintText: 'e.g., Kangkong, Pork Belly...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surface,
+                      ),
+                      onSubmitted: (_) => _addIngredient(),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: _addIngredient,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                      minimumSize: const Size(60, 60),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'RECENTLY ADDED',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+                color: Colors.grey,
+              ),
             ),
           ),
-          Expanded(
-            child: sortedItems.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No items added yet.',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: sortedItems.length,
-                    itemBuilder: (context, index) {
-                      final item = sortedItems[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                          child: Icon(Icons.restaurant, color: Theme.of(context).colorScheme.primary),
-                        ),
-                        title: Text(item.name),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.grey),
-                          onPressed: () {
-                            ref.read(pantryItemsProvider.notifier).deleteItem(item.id);
-                          },
-                        ),
-                      );
-                    },
+        ),
+        Expanded(
+          child: sortedItems.isEmpty
+              ? const Center(
+                  child: Text(
+                    'No items added yet.',
+                    style: TextStyle(color: Colors.grey),
                   ),
-          ),
-          Padding(
+                )
+              : ListView.builder(
+                  itemCount: sortedItems.length,
+                  itemBuilder: (context, index) {
+                    final item = sortedItems[index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        child: Icon(Icons.restaurant, color: Theme.of(context).colorScheme.primary),
+                      ),
+                      title: Text(item.name),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.grey),
+                        onPressed: () {
+                          ref.read(pantryItemsProvider.notifier).deleteItem(item.id);
+                        },
+                      ),
+                    );
+                  },
+                ),
+        ),
+        SafeArea(
+          child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: OutlinedButton.icon(
               onPressed: () {
@@ -222,8 +225,19 @@ class _ManualInputScreenState extends ConsumerState<ManualInputScreen> {
               ),
             ),
           ),
-        ],
+        ),
+      ],
+    );
+
+    if (widget.isModal) {
+      return content;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Add Ingredients'),
       ),
+      body: content,
     );
   }
 }

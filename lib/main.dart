@@ -10,6 +10,7 @@ import 'features/tracking/domain/models/meal_record.dart';
 import 'features/tracking/domain/models/water_log.dart';
 import 'features/sync/data/sync_service.dart';
 import 'features/inventory/presentation/settings_provider.dart';
+import 'shell/main_shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,7 +56,7 @@ class PiloApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
-      home: isOnboarded ? const InventoryScreen() : const OnboardingScreen(),
+      home: isOnboarded ? const MainShell() : const OnboardingScreen(),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'settings_provider.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -11,13 +12,12 @@ class SettingsScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('SETTINGS'),
-      ),
-      body: ListView(
+    return SafeArea(
+      child: ListView(
         padding: const EdgeInsets.all(24),
         children: [
+          _buildProfileHeader(context),
+          const SizedBox(height: 32),
           _buildSectionHeader('APPEARANCE'),
           _buildSettingTile(
             context,
@@ -56,6 +56,40 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProfileHeader(BuildContext context) {
+    final name = Hive.box('user_settings').get('user_name', defaultValue: 'Chef');
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 32,
+          backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          child: Icon(Icons.person, size: 32, color: Theme.of(context).colorScheme.primary),
+        ),
+        const SizedBox(width: 16),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: GoogleFonts.outfit(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Home Cook',
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
