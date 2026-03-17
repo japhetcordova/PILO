@@ -5,25 +5,39 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 
-import '../../scanner/presentation/scanner_screen.dart';
+import '../../tracking/presentation/meal_calendar_screen.dart';
+import '../../manual_input/presentation/manual_input_screen.dart';
 import '../../recipe/presentation/recipe_decision_screen.dart';
 import '../../recipe/data/brain_downloader.dart';
 import '../../recipe/presentation/brain_status_provider.dart';
+import '../../tracking/presentation/nutrition_dashboard_screen.dart';
+import '../../tracking/presentation/nutrition_provider.dart';
 
 class InventoryScreen extends ConsumerWidget {
   const InventoryScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items = ref.watch(pantryItemsProvider);
+    final items = ref.watch(filteredPantryItemsProvider);
+    final activeGroup = ref.watch(selectedPantryGroupProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('PILO — KUSINA'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.history),
-            onPressed: () {}, 
+            icon: const Icon(Icons.analytics_outlined),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NutritionDashboardScreen()),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.calendar_month),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MealCalendarScreen()),
+            ), 
           ),
         ],
       ),
@@ -31,10 +45,12 @@ class InventoryScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _PiloGreetingCard(),
+          const _NutritionTipBox(),
+          const _PantryGroupTabs(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
             child: Text(
-              'YOUR PANTRY',
+              '${activeGroup.toUpperCase()} INGREDIENTS',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -55,7 +71,7 @@ class InventoryScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 16),
                         const Text('Your pantry looks lonely.'),
-                        const Text('Scan items and Pilo will find a recipe!', style: TextStyle(color: Colors.grey)),
+                        const Text('Add ingredients and Pilo will find a recipe!', style: TextStyle(color: Colors.grey)),
                       ],
                     ),
                   )
@@ -82,16 +98,16 @@ class InventoryScreen extends ConsumerWidget {
                     context,
                     MaterialPageRoute(builder: (_) => const RecipeDecisionScreen()),
                   ),
-                  child: const Text('ASK PILO FOR A MEAL'),
+                  child: Text('ASK PILO FOR $activeGroup'),
                 ),
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
                   onPressed: () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const ScannerScreen()),
+                    MaterialPageRoute(builder: (_) => const ManualInputScreen()),
                   ),
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('SCAN WITH PILO'),
+                  icon: const Icon(Icons.edit_note),
+                  label: Text('ADD TO $activeGroup'),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 56),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -216,6 +232,102 @@ class _PantryItemCard extends StatelessWidget {
             style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey, letterSpacing: 0.5),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PantryGroupTabs extends ConsumerWidget {
+  const _PantryGroupTabs();
+
+  final List<String> groups = const ['Breakfast', 'Lunch', 'Dinner'];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedGroup = ref.watch(selectedPantryGroupProvider);
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+      child: Row(
+        children: groups.map((group) {
+          final isSelected = selectedGroup == group;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: ChoiceChip(
+              label: Text(group),
+              selected: isSelected,
+              onSelected: (selected) {
+                if (selected) {
+                  ref.read(selectedPantryGroupProvider.notifier).state = group;
+                }
+              },
+              labelStyle: GoogleFonts.outfit(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white : Colors.black87,
+              ),
+              selectedColor: Theme.of(context).primaryColor,
+              backgroundColor: Colors.grey[200],
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _NutritionTipBox extends ConsumerWidget {
+  const _NutritionTipBox();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tip = ref.watch(mascotNutritionTipProvider);
+
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const NutritionDashboardScreen()),
+      ),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Theme.of(context).colorScheme.primary.withOpacity(0.05),
+              Theme.of(context).hintColor.withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.1)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.lightbulb_outline, color: Theme.of(context).colorScheme.primary, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                tip,
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
+          ],
+        ),
       ),
     );
   }

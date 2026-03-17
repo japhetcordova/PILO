@@ -34,7 +34,7 @@ class _CookingModeScreenState extends State<CookingModeScreen> {
           .where((s) => s.isNotEmpty)
           .toList();
     }
-    if (_steps.isEmpty) _steps = ['Follow Pilo\'s lead!'];
+    if (_steps.isEmpty) _steps = ['Follow the recipe instructions!'];
   }
 
   @override

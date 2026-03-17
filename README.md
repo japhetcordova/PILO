@@ -23,12 +23,15 @@ Fuel uses on-device AI to scan your pantry in seconds, track expiration dates, a
 
 ## Features
 
-- Pantry Scanning: On-device vision (powered by ML Kit) to identify and catalog ingredients from photos.
-- Inventory Tracking: Local storage with expiration alerts to keep your pantry organized.
-- Offline AI Recipes: Local large language model generates one tailored meal suggestion based on your constraints.
+- Fast Manual Entry: Quickly type and add your ingredients, maintaining a lightweight and speedy experience.
+- Progressive Offline Learning: Train the AI on local and regional ingredients (e.g., Bisaya, Filipino items). The AI learns from your descriptions for better offline context.
+- Online Enrichment Sync: Automatically re-evaluates and enriches your user-trained ingredients in the background whenever an internet connection is detected.
+- Offline AI Recipes: Local large language model generates one tailored meal suggestion based on your constraints and custom trained knowledge.
+- Multiple Pantries: Separate your inventory into Breakfast, Lunch, and Dinner groups.
+- Daily Meal Tracker: A built-in calendar to log and visualize your eating habits.
 - Single-Decision UX: No endless lists—just one clear recommendation to reduce choice paralysis.
 - Fast Cooking Mode: Step-by-step guidance with timers for efficient, distraction-free cooking.
-- Privacy-First: Fully offline operation; no data sent to external servers.
+- Privacy-First: Core operation is offline; no data sent to external servers unless syncing.
 
 ## Tech Stack
 
@@ -42,12 +45,13 @@ Fuel uses on-device AI to scan your pantry in seconds, track expiration dates, a
 
 Fuel follows an offline-first architecture with modular layers:
 
-- Presentation Layer: Flutter widgets for UI (inventory screen, scanner, cooking mode).
-- Domain Layer: Business logic for meal decisions and pantry management.
-- Data Layer: Local repositories for inventory and AI services.
-- AI Integration: On-device models for vision and text generation, ensuring zero latency and privacy.
+- Presentation Layer: Flutter widgets for UI (inventory screen, manual input, offline training, cooking mode).
+- Domain Layer: Business logic for meal decisions, pantry management, and progressive learning.
+- Data Layer: Local repositories for inventory, custom trained ingredients, and AI services.
+- Sync Layer: Background service via `connectivity_plus` to enrich local offline context when online.
+- AI Integration: On-device model for text generation, ensuring zero latency and privacy.
 
-All processing happens locally on the device, with no cloud dependencies.
+All core processing happens locally on the device, with supplementary online syncs.
 
 ## Installation & Setup
 
@@ -81,19 +85,20 @@ For detailed setup, see [Flutter documentation](https://flutter.dev/docs/get-sta
 
 ## Usage Guide
 
-1. Scan Pantry: Open the scanner, take a photo of your ingredients—Fuel identifies and adds them to your inventory.
-2. Set Preferences: Input time available, dietary restrictions, and preferences.
-3. Get Recommendation: Tap "Generate Meal"—receive one tailored recipe instantly.
+1. Add Ingredients: Tap "Add Ingredients", quickly type what you have—Fuel identifies and adds them to your inventory.
+2. Teach Pilo: Tap "Teach Pilo" if you have a local ingredient (like Batuan) the offline AI might not know well. Fill in its flavor profile to help Pilo learn!
+3. Get Recommendation: Tap "Ask Pilo for a Meal"—receive one tailored recipe instantly.
 4. Cook Mode: Follow step-by-step instructions with built-in timers.
-5. Manage Inventory: View and update pantry items, with expiration reminders.
+5. Online Sync: Connect to Wi-Fi to let Pilo automatically double-check and enrich the custom ingredients you've taught it.
 
-Fuel is intuitive: scan, decide, cook—all in under a minute.
+Fuel is intuitive: input, teach, decide, cook—all in under a minute.
 
 ## Screenshots
 
 (Screenshots coming soon—placeholder for app interface)
 
-- Pantry Scanner Interface
+- Fast Manual Input Interface
+- Offline Ingredient Training Screen
 - Meal Recommendation Screen
 - Cooking Mode with Steps
 

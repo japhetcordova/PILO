@@ -8,6 +8,18 @@ final pantryItemsProvider = StateNotifierProvider<PantryItemsNotifier, List<Pant
   return PantryItemsNotifier(ref.watch(pantryRepositoryProvider));
 });
 
+// Create a state provider to keep track of the selected tab
+final selectedPantryGroupProvider = StateProvider<String>((ref) => 'All');
+
+// Provide a filtered list based on the selected group
+final filteredPantryItemsProvider = Provider<List<PantryItem>>((ref) {
+  final group = ref.watch(selectedPantryGroupProvider);
+  final allItems = ref.watch(pantryItemsProvider);
+  
+  if (group == 'All') return allItems;
+  return allItems.where((item) => item.pantryGroup == group).toList();
+});
+
 class PantryItemsNotifier extends StateNotifier<List<PantryItem>> {
   final PantryRepository _repository;
 
