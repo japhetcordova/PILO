@@ -81,7 +81,6 @@ class _MainShellState extends State<MainShell> {
         index: _currentIndex,
         children: _pages,
       ),
-      extendBody: true, // Allows the body to flow under the floating nav bar
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddIngredientSheet,
         elevation: 4,
@@ -118,25 +117,23 @@ class _MainShellState extends State<MainShell> {
           child: ClipRRect(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: BottomAppBar(
-                elevation: 0,
-                color: Colors.transparent,
-                shape: const CircularNotchedRectangle(),
-                notchMargin: 8,
-                child: SizedBox(
-                  height: 60,
+                child: BottomAppBar(
+                  elevation: 0,
+                  color: Colors.transparent,
+                  shape: const CircularNotchedRectangle(),
+                  notchMargin: 8,
+                  padding: EdgeInsets.zero,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildNavItem(0, Icons.home_filled, Icons.home_outlined, 'Home'),
                       _buildNavItem(1, Icons.restaurant_menu, Icons.restaurant_menu_outlined, 'Recipes'),
-                      const SizedBox(width: 48), // Space for FAB
+                      const SizedBox(width: 56), // Space for FAB
                       _buildNavItem(2, Icons.bar_chart, Icons.bar_chart_outlined, 'Track'),
                       _buildNavItem(3, Icons.person, Icons.person_outline, 'Profile'),
                     ],
                   ),
                 ),
-              ),
             ),
           ),
         ),
@@ -154,7 +151,7 @@ class _MainShellState extends State<MainShell> {
       onTap: () => _onTabTapped(index),
       borderRadius: BorderRadius.circular(50),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -162,13 +159,13 @@ class _MainShellState extends State<MainShell> {
             Icon(
               isSelected ? activeIcon : inactiveIcon,
               color: color,
-              size: 24,
+              size: 22,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               style: GoogleFonts.outfit(
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 color: color,
               ),

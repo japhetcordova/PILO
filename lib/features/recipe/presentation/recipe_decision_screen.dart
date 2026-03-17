@@ -132,39 +132,19 @@ class _RecipeDecisionScreenState extends ConsumerState<RecipeDecisionScreen> {
   @override
   Widget build(BuildContext context) {
     return _isLoading
-          ? Center(
+          ? const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Image.asset('assets/images/pilo_thinking.png', width: 100, height: 100),
-                  ),
-                  const SizedBox(height: 24),
-                  CircularProgressIndicator(
-                    color: Theme.of(context).colorScheme.primary,
-                    strokeWidth: 3,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    _currentWittyMessage,
-                    style: GoogleFonts.outfit(
-                      letterSpacing: 1.5,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
+                  CircularProgressIndicator(),
                 ],
               ),
             )
-          : Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -356,6 +336,7 @@ class _RecipeDecisionScreenState extends ConsumerState<RecipeDecisionScreen> {
                   ),
                 ],
               ),
-            );
+            ),
+          );
   }
 }
