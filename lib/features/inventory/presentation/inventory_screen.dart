@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'pantry_providers.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 
 import '../../scanner/presentation/scanner_screen.dart';
 import '../../recipe/presentation/recipe_decision_screen.dart';
+import '../../recipe/data/brain_downloader.dart';
+import '../../recipe/presentation/brain_status_provider.dart';
 
 class InventoryScreen extends ConsumerWidget {
   const InventoryScreen({super.key});
@@ -28,6 +31,7 @@ class InventoryScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _PiloGreetingCard(),
+          if (!ref.watch(brainStatusProvider)) const _BrainDownloadCard(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
             child: Text(
@@ -139,7 +143,7 @@ class _PiloGreetingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Good morning, Chef!',
+                  'Good morning, ${Hive.box('user_settings').get('user_name', defaultValue: 'Chef')}!',
                   style: GoogleFonts.outfit(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -196,6 +200,114 @@ class _PantryItemCard extends StatelessWidget {
             'In stock',
             style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey, letterSpacing: 0.5),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrainDownloadCard extends ConsumerStatefulWidget {
+  const _BrainDownloadCard();
+
+  @override
+  ConsumerState<_BrainDownloadCard> createState() => _BrainDownloadCardState();
+}
+
+class _BrainDownloadCardState extends ConsumerState<_BrainDownloadCard> {
+  double _progress = 0;
+  bool _isDownloading = false;
+  String _message = 'Give Pilo a "Brain" for better offline recipes!';
+
+  Future<void> _startDownload() async {
+    setState(() {
+      _isDownloading = true;
+      _message = 'Pilo is learning... (1.3GB)';
+    });
+
+    try {
+      await BrainDownloader.downloadBrain(
+        onProgress: (p) => setState(() => _progress = p),
+        onComplete: () {
+          ref.read(brainStatusProvider.notifier).setDownloaded(true);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Pilo is now super smart! 🧠')),
+            );
+          }
+        },
+        onError: (e) {
+          setState(() {
+            _isDownloading = false;
+            _message = 'Oops! Pilo got a headache. Try again?';
+          });
+        },
+      );
+    } catch (e) {
+      setState(() {
+        _isDownloading = false;
+        _message = 'Connection failed. Check your WiFi!';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.1)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.psychology, color: Color(0xFFFF5722), size: 32),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI BRAIN UPGRADE',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    Text(
+                      _message,
+                      style: GoogleFonts.outfit(fontSize: 14, color: Colors.black87),
+                    ),
+                  ],
+                ),
+              ),
+              if (!_isDownloading)
+                IconButton(
+                  onPressed: _startDownload,
+                  icon: const Icon(Icons.download_for_offline, color: Color(0xFFFF5722)),
+                ),
+            ],
+          ),
+          if (_isDownloading) ...[
+            const SizedBox(height: 16),
+            LinearProgressIndicator(
+              value: _progress,
+              backgroundColor: Colors.grey[200],
+              color: Theme.of(context).colorScheme.primary,
+              minHeight: 10,
+              // Use borderRadius on LinearProgressIndicator if available in your Flutter version
+              // borderRadius: BorderRadius.circular(8),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${(_progress * 100).toStringAsFixed(1)}%',
+              style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ],
         ],
       ),
     );

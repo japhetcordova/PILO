@@ -1,4 +1,5 @@
-import 'package:mediapipe_genai/mediapipe_genai.dart';
+import 'dart:io';
+import 'brain_downloader.dart';
 import '../../inventory/domain/models/pantry_item.dart';
 
 class AiService {
@@ -7,9 +8,14 @@ class AiService {
 
   Future<void> initialize() async {
     try {
-      // We use dynamic for the engine to avoid build-time errors with specific package versions
-      // The actual implementation depends on the mediapipe_genai package structure
-      _isLoaded = false; 
+      final modelPath = await BrainDownloader.localPath;
+      if (await File(modelPath).exists()) {
+        // We'll use a safer dynamic approach to avoid compile-time errors with experimental packages
+        // Once the package API is confirmed, we can use the typed version.
+        _isLoaded = false; // Keep as false for now until API is verified
+      } else {
+        _isLoaded = false;
+      }
     } catch (e) {
       _isLoaded = false;
     }
