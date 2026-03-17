@@ -41,6 +41,12 @@ class BrainDownloader {
     }
   }
 
+  static Future<void> importBrain(String sourcePath) async {
+    final destinationPath = await localPath;
+    final sourceFile = File(sourcePath);
+    await sourceFile.copy(destinationPath);
+  }
+
   static Future<void> deleteBrain() async {
     final path = await localPath;
     final file = File(path);

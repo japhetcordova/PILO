@@ -11,20 +11,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pilo/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('Pilo App smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const PiloApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that the title is correct
+    expect(find.text('Pilo AI'), findsNothing); // It's in the MaterialApp title, not usually a widget
+    
+    // Check if we are on the Onboarding screen initially
+    expect(find.text('Mabuhay, Chef!'), findsOneWidget);
   });
 }

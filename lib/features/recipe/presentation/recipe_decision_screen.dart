@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../data/ai_service.dart';
+import '../presentation/ai_provider.dart';
 import '../../inventory/presentation/pantry_providers.dart';
 import 'cooking_mode.dart';
 
@@ -14,7 +14,6 @@ class RecipeDecisionScreen extends ConsumerStatefulWidget {
 }
 
 class _RecipeDecisionScreenState extends ConsumerState<RecipeDecisionScreen> {
-  final AiService _aiService = AiService();
   String? _recipe;
   bool _isLoading = true;
   String _currentWittyMessage = 'PILO IS SNIFFING OUT A MEAL...';
@@ -36,7 +35,8 @@ class _RecipeDecisionScreenState extends ConsumerState<RecipeDecisionScreen> {
   Future<void> _generate() async {
     _startWittyTimer();
     final items = ref.read(pantryItemsProvider);
-    final recipeText = await _aiService.generateRecipe(items);
+    final aiService = ref.read(aiServiceProvider);
+    final recipeText = await aiService.generateRecipe(items);
     
     // Add artificial delay to feel more "premium" and intentional
     await Future.delayed(const Duration(seconds: 2));

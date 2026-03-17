@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'brain_downloader.dart';
 import '../../inventory/domain/models/pantry_item.dart';
 
@@ -9,12 +11,22 @@ class AiService {
   Future<void> initialize() async {
     try {
       final modelPath = await BrainDownloader.localPath;
-      if (await File(modelPath).exists()) {
-        // We'll use a safer dynamic approach to avoid compile-time errors with experimental packages
-        // Once the package API is confirmed, we can use the typed version.
-        _isLoaded = false; // Keep as false for now until API is verified
-      } else {
-        _isLoaded = false;
+      final localFile = File(modelPath);
+
+      if (!(await localFile.exists())) {
+        // Try to auto-import from assets if the developer put it there
+        try {
+          final data = await rootBundle.load('assets/models/pilo_brain.bin');
+          final bytes = data.buffer.asUint8List();
+          await localFile.writeAsBytes(bytes);
+          debugPrint('Pilo: Brain auto-imported from assets! 🧠✨');
+        } catch (e) {
+          debugPrint('Pilo: No brain in assets, waiting for manual import.');
+        }
+      }
+
+      if (await localFile.exists()) {
+        _isLoaded = true; 
       }
     } catch (e) {
       _isLoaded = false;

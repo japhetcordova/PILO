@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../recipe/presentation/ai_provider.dart';
 import 'inventory_screen.dart';
 
-class OnboardingScreen extends StatefulWidget {
+class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final TextEditingController _nameController = TextEditingController();
 
   Future<void> _saveName() async {
@@ -19,6 +21,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final box = Hive.box('user_settings');
     await box.put('user_name', _nameController.text.trim());
     await box.put('is_onboarded', true);
+
+    // Trigger AI Brain activation in background immediately!
+    ref.read(aiServiceProvider);
 
     if (mounted) {
       Navigator.pushReplacement(
