@@ -2,14 +2,15 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class BrainDownloader {
   static const String modelUrl = 
-      'https://storage.googleapis.com/mediapipe-models/llm_inference/gemma-2b-it-gpu-int4/float16/1/gemma-2b-it-gpu-int4.bin';
+      'https://huggingface.co/litert-community/Qwen2.5-0.5B-Instruct/resolve/main/Qwen2.5-0.5B-Instruct_multi-prefill-seq_q8_ekv1280.task';
   
   static Future<String> get localPath async {
     final directory = await getApplicationDocumentsDirectory();
-    return p.join(directory.path, 'pilo_brain.bin');
+    return p.join(directory.path, 'pilo_brain.task');
   }
 
   static Future<bool> isBrainDownloaded() async {
@@ -25,6 +26,12 @@ class BrainDownloader {
     final path = await localPath;
     final dio = Dio();
 
+    final connectivityResult = await Connectivity().checkConnectivity();
+    if (connectivityResult == ConnectivityResult.none) {
+      onError('No internet connection. Please connect to a network to download Pilo\'s brain.');
+      return;
+    }
+
     try {
       await dio.download(
         modelUrl,
@@ -37,8 +44,12 @@ class BrainDownloader {
       );
       onComplete();
     } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
-        onError('Brain server is unreachable (404). Please use "Manual Import" for now!');
+      if (e.response?.statusCode == 404 || e.type == DioExceptionType.badResponse) {
+        onError('The AI model file is currently unavailable for direct download. '
+                'Google has gated these models behind Kaggle. '
+                'Please use "Manual Import" or follow the Kaggle link below!');
+      } else if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+        onError('Download timed out. Please check your internet connection and try again.');
       } else {
         onError('Download failed: ${e.message}');
       }

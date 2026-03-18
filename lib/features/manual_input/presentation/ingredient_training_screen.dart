@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
@@ -94,13 +95,18 @@ class _IngredientTrainingScreenState extends ConsumerState<IngredientTrainingScr
                   labelText: 'Ingredient Name',
                   hintText: 'e.g. Batuan, Kangkong',
                   border: OutlineInputBorder(),
+                  counterText: '',
                 ),
+                maxLength: 100,
+                maxLengthEnforcement: MaxLengthEnforcement.enforced,
                 validator: (value) => value == null || value.isEmpty ? 'Required field' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 3,
+                maxLength: 500,
+                maxLengthEnforcement: MaxLengthEnforcement.enforced,
                 decoration: const InputDecoration(
                   labelText: 'Description / Flavor Profile',
                   hintText: 'e.g. Sour fruit, leafy green',
@@ -110,6 +116,8 @@ class _IngredientTrainingScreenState extends ConsumerState<IngredientTrainingScr
               const SizedBox(height: 16),
               TextFormField(
                 controller: _usesController,
+                maxLength: 500,
+                maxLengthEnforcement: MaxLengthEnforcement.enforced,
                 decoration: const InputDecoration(
                   labelText: 'Common Uses',
                   hintText: 'e.g. Used for souring soup (Sinigang)',
@@ -119,6 +127,8 @@ class _IngredientTrainingScreenState extends ConsumerState<IngredientTrainingScr
               const SizedBox(height: 16),
               TextFormField(
                 controller: _colorController,
+                maxLength: 100,
+                maxLengthEnforcement: MaxLengthEnforcement.enforced,
                 decoration: const InputDecoration(
                   labelText: 'Color / Appearance',
                   hintText: 'e.g. Small round green fruit',

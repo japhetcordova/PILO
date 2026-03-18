@@ -10,8 +10,11 @@ class NutritionDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(weeklyNutritionStatsProvider);
     final mascotTip = ref.watch(mascotNutritionTipProvider);
+    final theme = Theme.of(context);
 
-    return SingleChildScrollView(
+    return Material(
+      color: Colors.transparent,
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,6 +61,7 @@ class NutritionDashboardScreen extends ConsumerWidget {
             _buildCategoryGuide(context),
           ],
         ),
+      ),
     );
   }
 
@@ -91,6 +95,7 @@ class NutritionDashboardScreen extends ConsumerWidget {
                   style: GoogleFonts.outfit(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -112,9 +117,9 @@ class NutritionDashboardScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black.withOpacity(0.05)),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,7 +146,10 @@ class NutritionDashboardScreen extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             subLabel,
-            style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey),
+            style: GoogleFonts.outfit(
+              fontSize: 11, 
+              color: Theme.of(context).textTheme.bodySmall?.color
+            ),
           ),
           const SizedBox(height: 12),
           ClipRRect(
@@ -172,14 +180,14 @@ class NutritionDashboardScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _buildGuideItem('GO', 'Carbohydrates like rice, bread, potatoes, and pasta.', Colors.orange),
-        _buildGuideItem('GROW', 'Proteins like chicken, pork, fish, eggs, and beans.', Colors.redAccent),
-        _buildGuideItem('GLOW', 'Vitamins from vegetables and fruits like carrots, kangkong, and apples.', Colors.green),
+        _buildGuideItem(context, 'GO', 'Carbohydrates like rice, bread, potatoes, and pasta.', Colors.orange),
+        _buildGuideItem(context, 'GROW', 'Proteins like chicken, pork, fish, eggs, and beans.', Colors.redAccent),
+        _buildGuideItem(context, 'GLOW', 'Vitamins from vegetables and fruits like carrots, kangkong, and apples.', Colors.green),
       ],
     );
   }
 
-  Widget _buildGuideItem(String title, String desc, Color color) {
+  Widget _buildGuideItem(BuildContext context, String title, String desc, Color color) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -204,7 +212,10 @@ class NutritionDashboardScreen extends ConsumerWidget {
           Expanded(
             child: Text(
               desc,
-              style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey[700]),
+              style: GoogleFonts.outfit(
+                fontSize: 12, 
+                color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7)
+              ),
             ),
           ),
         ],

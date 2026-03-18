@@ -11,6 +11,7 @@ import '../../tracking/presentation/meal_providers.dart';
 import 'package:uuid/uuid.dart';
 import 'cooking_mode.dart';
 import 'brain_status_provider.dart';
+import '../../inventory/presentation/onboarding_screen.dart';
 
 class RecipeDecisionScreen extends ConsumerStatefulWidget {
   const RecipeDecisionScreen({super.key});
@@ -188,16 +189,41 @@ class _RecipeDecisionScreenState extends ConsumerState<RecipeDecisionScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+                          const Icon(Icons.bolt_rounded, color: Colors.orange, size: 20),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: Text(
-                              'Pilo Brain is missing! Using high-speed fallback logic.',
-                              style: GoogleFonts.outfit(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.orange[800],
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Pilo is using his "Scrappy Chef Logic" (Local Engine).',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange[800],
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'For more creative & complex recipes, setup his full Brain!',
+                                  style: GoogleFonts.outfit(fontSize: 10, color: Colors.orange[700]),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.push(
+                                    context, 
+                                    MaterialPageRoute(builder: (_) => const OnboardingScreen())
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: const Size(0, 30),
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: Text(
+                                    'SETUP FULL BRAIN', 
+                                    style: TextStyle(fontSize: 11, color: Colors.blue[800], fontWeight: FontWeight.bold)
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],

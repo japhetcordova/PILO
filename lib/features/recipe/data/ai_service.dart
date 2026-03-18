@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mediapipe_genai/mediapipe_genai.dart';
 import 'package:hive/hive.dart';
 import 'brain_downloader.dart';
+import 'local_recipe_database.dart';
 import '../../inventory/domain/models/pantry_item.dart';
 import '../../inventory/domain/models/custom_ingredient.dart';
 
@@ -13,29 +14,50 @@ class AiService {
   bool _isLoaded = false;
   Future<void>? _initFuture;
 
-  Future<void> initialize() {
+  Future<void> initialize() async {
     _initFuture ??= _doInitialize();
-    return _initFuture!;
+    await _initFuture;
   }
 
   Future<void> _doInitialize() async {
     try {
+      // MediaPipe GenAI does not support x86/x86_64 emulators.
+      // We check the Platform version or arch to avoid hard-crashing the app.
+      if (Platform.isAndroid) {
+        // Simple check to skip on x86/x86_64 emulators which usually have 'sdk_gphone' or similar in version information
+        // or we can check the CPU architecture if available.
+        final version = Platform.version.toLowerCase();
+        if (version.contains('x86') || version.contains('x64')) {
+          debugPrint('AiService: Running on x86/x64 architecture. Skipping MediaPipe to avoid native crash.');
+          _isLoaded = false;
+          return;
+        }
+      }
+
       final modelPath = await BrainDownloader.localPath;
       final localFile = File(modelPath);
 
       if (await localFile.exists()) {
         debugPrint('AiService: Found brain model at $modelPath. Loading...');
-        final options = LlmInferenceOptions.gpu(
-          modelPath: modelPath,
-          sequenceBatchSize: 0,
-          topK: 40,
-          maxTokens: 512,
-          temperature: 0.8,
-          randomSeed: 42,
-        );
-        _engine = LlmInferenceEngine(options);
-        _isLoaded = true; 
-        debugPrint('AiService: Engine loaded successfully.');
+        try {
+          final options = LlmInferenceOptions.gpu(
+            modelPath: modelPath,
+            sequenceBatchSize: 0,
+            topK: 64,
+            maxTokens: 1024,
+            temperature: 0.8,
+            randomSeed: 42,
+          );
+          _engine = LlmInferenceEngine(options);
+          _isLoaded = true; 
+          debugPrint('AiService: Engine loaded successfully.');
+        } on ArgumentError catch (e) {
+          debugPrint('AiService: Native FFI Error (Likely incompatible device/emulator): $e');
+          _isLoaded = false;
+        } catch (e) {
+          debugPrint('AiService: Engine initialization error: $e');
+          _isLoaded = false;
+        }
       } else {
         debugPrint('AiService: Brain model NOT found at $modelPath. Falling back to simple chef logic.');
         _isLoaded = false;
@@ -54,10 +76,14 @@ class AiService {
   }) async {
     await initialize();
     if (!_isLoaded || _engine == null) {
-      return [_getFallbackRecipe(items)];
+      return _getFallbackRecipes(items);
     }
 
-    final itemNames = items.map((e) => e.name).join(', ');
+    final itemNames = items.map((e) {
+      // Basic sanitization: remove special characters and limit length
+      final sanitized = e.name.replaceAll(RegExp(r'[^\w\s-]'), '').trim();
+      return sanitized.length > 50 ? sanitized.substring(0, 50) : sanitized;
+    }).join(', ');
     final categoryName = category.name.toUpperCase();
     
     final customBox = Hive.box<CustomIngredient>('custom_ingredients');
@@ -111,25 +137,53 @@ class AiService {
           .toList();
           
       return parts.isNotEmpty ? parts : [fullResponse];
+    } on ArgumentError catch (e) {
+      debugPrint('AiService: Native FFI Error during generation: $e');
+      return _getFallbackRecipes(items);
     } catch (e) {
       debugPrint('Multi-recipe generation failed: $e');
-      return [_getFallbackRecipe(items)];
+      return _getFallbackRecipes(items);
     }
   }
 
-  String _getFallbackRecipe(List<PantryItem> items) {
-    if (items.isEmpty) return "Sufficient ingredients are required to generate a recipe. Please add items to your inventory.";
-    final mainItem = items.isNotEmpty ? items.first.name : "Ingredients";
-    return """
-RECIPE: Professional Quick $mainItem Preparation
-CHEF'S UPGRADE: Fresh Herbs (Parsley or Cilantro) and a squeeze of Lemon to brighten the flavors.
-INGREDIENTS: ${items.map((e) => e.name).join(', ')}, Cooking Oil, Salt.
-STEPS: 
-1. Carefully prepare and chop all ingredients to a uniform size. 
-2. Heat oil in a suitable pan over medium heat. 
-3. Sauté the ingredients until fully cooked and aromatic. 
-4. Season with salt to taste and serve immediately.
-TIME: 15
-    """;
+  List<String> _getFallbackRecipes(List<PantryItem> items) {
+    if (items.isEmpty) {
+      return ["Sufficient ingredients are required to generate a recipe. Please add items to your inventory."];
+    }
+
+    // Determine available categories
+    final availableCategories = items
+        .map((e) => e.nutritionalCategory.name.toLowerCase())
+        .toSet();
+    
+    final itemNames = items.map((e) => e.name).toList();
+
+    // Score and filter curated recipes
+    final matches = curatedRecipes.where((recipe) {
+      // Recipe matches if the user has AT LEAST ONE of the required categories
+      return recipe.requiredCategories.any((cat) => availableCategories.contains(cat));
+    }).toList();
+
+    // Sort by best match (most categories covered)
+    matches.sort((a, b) {
+      final aCovered = a.requiredCategories.where((cat) => availableCategories.contains(cat)).length;
+      final bCovered = b.requiredCategories.where((cat) => availableCategories.contains(cat)).length;
+      return bCovered.compareTo(aCovered);
+    });
+
+    final results = matches.take(3).map((r) => r.toFormattedString(itemNames)).toList();
+
+    if (results.isEmpty) {
+      // Absolute fallback if no categories match (unlikely)
+      return [
+        "RECIPE: Chef's Pantry Surprise\n"
+        "CHEF'S UPGRADE: A touch of salt and high heat.\n"
+        "INGREDIENTS: ${itemNames.join(', ')}\n"
+        "STEPS: 1. Sauté everything together until aromatic. 2. Serve immediately.\n"
+        "TIME: 10"
+      ];
+    }
+
+    return results;
   }
 }

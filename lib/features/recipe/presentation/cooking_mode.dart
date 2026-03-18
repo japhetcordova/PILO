@@ -29,7 +29,7 @@ class _CookingModeScreenState extends State<CookingModeScreen> {
         timeIndex != -1 ? timeIndex : widget.recipe.length,
       );
       _steps = stepsPart
-          .split(RegExp(r'\d+\.'))
+          .split(RegExp(r'(?<=^|\n)\s*\d+\.\s*'))
           .map((s) => s.trim())
           .where((s) => s.isNotEmpty)
           .toList();
@@ -39,9 +39,10 @@ class _CookingModeScreenState extends State<CookingModeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        if (_currentStep == 0) return true;
+    return PopScope(
+      canPop: _currentStep == 0,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (didPop) return;
         
         final shouldPop = await showDialog<bool>(
           context: context,
@@ -61,7 +62,10 @@ class _CookingModeScreenState extends State<CookingModeScreen> {
             ],
           ),
         );
-        return shouldPop ?? false;
+        
+        if (shouldPop == true && context.mounted) {
+          Navigator.pop(context);
+        }
       },
       child: Scaffold(
         extendBodyBehindAppBar: true,
@@ -87,7 +91,7 @@ class _CookingModeScreenState extends State<CookingModeScreen> {
             LinearProgressIndicator(
               value: (_currentStep + 1) / _steps.length,
               backgroundColor: Colors.white10,
-              color: const Color(0xFFFF5722),
+              color: Theme.of(context).primaryColor,
               minHeight: 6,
             ),
             Expanded(
@@ -171,10 +175,10 @@ class _CookingModeScreenState extends State<CookingModeScreen> {
                     },
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(200, 75),
-                      backgroundColor: const Color(0xFFFF5722),
+                      backgroundColor: Theme.of(context).primaryColor,
                       foregroundColor: Colors.white,
                       elevation: 10,
-                      shadowColor: const Color(0xFFFF5722).withOpacity(0.4),
+                      shadowColor: Theme.of(context).primaryColor.withOpacity(0.4),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                     ),
                     child: Text(

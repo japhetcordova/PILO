@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const primaryColor = Color(0xFFFF5722); // Pilo's Orange
+  static const primaryColor = Color(0xFFE64A19); // Pilo's Orange (Darkened for Contrast)
   static const backgroundColor = Color(0xFFF5F7F8); // Clean soft light background
   static const surfaceColor = Colors.white;
   static const accentColor = Color(0xFF2E7D32); // Deep Jungle Green

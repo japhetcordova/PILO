@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../recipe/presentation/ai_provider.dart';
 import '../../recipe/data/brain_downloader.dart';
+import '../../../shell/main_shell.dart';
 import 'inventory_screen.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -27,7 +28,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     final box = Hive.box('user_settings');
     await box.put('user_name', _nameController.text.trim());
-    await box.put('is_onboarded', true);
+    // Removed premature is_onboarded = true
 
     // Check if brain is already downloaded
     final isDownloaded = await BrainDownloader.isBrainDownloaded();
@@ -76,6 +77,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         await BrainDownloader.importBrain(result.files.single.path!);
         
         setState(() => _progress = 1.0);
+        await Hive.box('user_settings').put('is_onboarded', true);
         _navigateToMain();
       }
     } catch (e) {
@@ -85,14 +87,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
 
-  void _navigateToMain() {
+  void _navigateToMain() async {
     // Eagerly initialize AI Service now that the brain is ready
     ref.read(aiServiceProvider);
+    
+    // Ensure marked as onboarded
+    await Hive.box('user_settings').put('is_onboarded', true);
     
     if (mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const InventoryScreen()),
+        MaterialPageRoute(builder: (_) => MainShell()),
       );
     }
   }
@@ -209,34 +214,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                // Fallback options
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton.icon(
-                      onPressed: () => _importManually(),
-                      icon: const Icon(Icons.file_upload_outlined, size: 20),
-                      label: const Text('IMPORT MANUALLY'),
-                      style: TextButton.styleFrom(foregroundColor: Colors.blue[700]),
-                    ),
-                    const Text(' • ', style: TextStyle(color: Colors.grey)),
-                    TextButton(
-                      onPressed: () async {
-                        final url = Uri.parse('https://www.kaggle.com/models/google/gemma/mediapipe/gemma-2b-it-gpu-int4');
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(url);
-                        }
-                      },
-                      child: const Text('KAGGLE LINK'),
-                      style: TextButton.styleFrom(foregroundColor: Colors.grey[700]),
-                    ),
-                    const Text(' • ', style: TextStyle(color: Colors.grey)),
-                    TextButton(
-                      onPressed: () => _navigateToMain(),
-                      child: const Text('SKIP FOR NOW'),
-                      style: TextButton.styleFrom(foregroundColor: Colors.orange[800]),
-                    ),
-                  ],
+                TextButton(
+                  onPressed: () => _navigateToMain(),
+                  child: const Text('SKIP FOR NOW'),
+                  style: TextButton.styleFrom(foregroundColor: Colors.orange[800]),
                 ),
               ],
             ],

@@ -34,8 +34,11 @@ class _MealCalendarScreenState extends ConsumerState<MealCalendarScreen> {
   Widget build(BuildContext context) {
     final allRecords = ref.watch(mealRecordsProvider);
     final selectedEvents = _selectedDay != null ? _getEventsForDay(_selectedDay!, allRecords) : [];
+    final theme = Theme.of(context);
 
-    return Column(
+    return Material(
+      color: Colors.transparent,
+      child: Column(
         children: [
           TableCalendar(
             firstDay: DateTime.utc(2024, 1, 1),
@@ -107,7 +110,7 @@ class _MealCalendarScreenState extends ConsumerState<MealCalendarScreen> {
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
-                      color: Colors.grey,
+                      color: theme.textTheme.bodySmall?.color,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -137,7 +140,8 @@ class _MealCalendarScreenState extends ConsumerState<MealCalendarScreen> {
               ),
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -159,7 +163,7 @@ class _MealCalendarScreenState extends ConsumerState<MealCalendarScreen> {
         break;
       default:
         icon = Icons.restaurant;
-        color = Colors.grey;
+        color = Theme.of(context).textTheme.bodySmall?.color ?? Colors.grey;
     }
     return CircleAvatar(
       backgroundColor: color.withOpacity(0.1),

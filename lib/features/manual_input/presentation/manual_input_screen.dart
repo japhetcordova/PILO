@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
@@ -141,7 +142,10 @@ class _ManualInputScreenState extends ConsumerState<ManualInputScreen> {
                         ),
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surface,
+                        counterText: '', // Hide the counter for a cleaner look
                       ),
+                      maxLength: 100,
+                      maxLengthEnforcement: MaxLengthEnforcement.enforced,
                       onSubmitted: (_) => _addIngredient(),
                     ),
                   ),
