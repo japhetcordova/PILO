@@ -6,40 +6,46 @@ class NutritionStats {
   final int go;
   final int grow;
   final int glow;
+  final int totalMeals;
 
-  NutritionStats({required this.go, required this.grow, required this.glow});
+  NutritionStats({required this.go, required this.grow, required this.glow, required this.totalMeals});
 
-  double get total => (go + grow + glow).toDouble();
+  // Percentage calculations relative to balanced target (1/3 each)
+  // Or simply normalized to the total counts if we want to show share
+  double get totalCount => (go + grow + glow).toDouble();
   
-  double get goPercentage => total > 0 ? go / total : 0.0;
-  double get growPercentage => total > 0 ? grow / total : 0.0;
-  double get glowPercentage => total > 0 ? glow / total : 0.0;
+  double get goPercentage => totalCount > 0 ? go / totalCount : 0.0;
+  double get growPercentage => totalCount > 0 ? grow / totalCount : 0.0;
+  double get glowPercentage => totalCount > 0 ? glow / totalCount : 0.0;
 }
 
 final weeklyNutritionStatsProvider = Provider<NutritionStats>((ref) {
   final records = ref.watch(mealRecordsProvider);
   final now = DateTime.now();
-  final lastWeek = now.subtract(const Duration(days: 7));
+  // Filter for last 7 days, including today
+  final startOfRange = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 7));
 
   int go = 0;
   int grow = 0;
   int glow = 0;
+  int totalMeals = 0;
 
   for (MealRecord record in records) {
-    if (record.date.isAfter(lastWeek)) {
+    if (record.date.isAfter(startOfRange)) {
       go += record.goCount;
       grow += record.growCount;
       glow += record.glowCount;
+      totalMeals++;
     }
   }
 
-  return NutritionStats(go: go, grow: grow, glow: glow);
+  return NutritionStats(go: go, grow: grow, glow: glow, totalMeals: totalMeals);
 });
 
 final mascotNutritionTipProvider = Provider<String>((ref) {
   final stats = ref.watch(weeklyNutritionStatsProvider);
   
-  if (stats.total == 0) {
+  if (stats.totalMeals == 0) {
     return "Pilo is hungry for data! Log your meals so I can give you health tips!";
   }
 

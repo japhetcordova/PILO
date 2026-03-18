@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import '../domain/models/recipe_model.dart';
 
 class CookingModeScreen extends StatefulWidget {
-  final String recipe;
+  final RecipeModel recipe;
   const CookingModeScreen({super.key, required this.recipe});
 
   @override
@@ -17,22 +17,10 @@ class _CookingModeScreenState extends State<CookingModeScreen> {
   @override
   void initState() {
     super.initState();
-    _parseSteps();
-  }
-
-  void _parseSteps() {
-    final stepsIndex = widget.recipe.indexOf('STEPS:');
-    final timeIndex = widget.recipe.indexOf('TIME:');
-    if (stepsIndex != -1) {
-      final stepsPart = widget.recipe.substring(
-        stepsIndex + 6,
-        timeIndex != -1 ? timeIndex : widget.recipe.length,
-      );
-      _steps = stepsPart
-          .split(RegExp(r'(?<=^|\n)\s*\d+\.\s*'))
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty)
-          .toList();
+    _steps = [];
+    for (var phase in widget.recipe.steps) {
+      _steps.add('PHASE: ${phase.title.toUpperCase()}');
+      _steps.addAll(phase.details);
     }
     if (_steps.isEmpty) _steps = ['Follow the recipe instructions!'];
   }

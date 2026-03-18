@@ -2,10 +2,16 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:mediapipe_genai/mediapipe_genai.dart';
 import 'package:hive/hive.dart';
-import 'brain_downloader.dart';
+import 'package:uuid/uuid.dart';
+import 'package:pilo/features/inventory/domain/models/pantry_item.dart';
+import 'package:pilo/features/inventory/domain/models/custom_ingredient.dart';
+import '../domain/models/recipe_model.dart';
+import '../domain/models/recipe_book_item.dart';
 import 'local_recipe_database.dart';
-import '../../inventory/domain/models/pantry_item.dart';
-import '../../inventory/domain/models/custom_ingredient.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dio/dio.dart';
+import 'brain_downloader.dart';
+import 'package:pilo/core/config/api_config.dart';
 
 enum RecipeCategory { meal, snack, beverage, dessert }
 
@@ -13,6 +19,17 @@ class AiService {
   LlmInferenceEngine? _engine;
   bool _isLoaded = false;
   Future<void>? _initFuture;
+  final Dio _dio = Dio();
+  final Connectivity _connectivity = Connectivity();
+
+  bool get isOnlineMode => _isOnlineMode;
+  bool _isOnlineMode = false;
+
+  String get brainName {
+    if (_isOnlineMode) return 'Online Brain (Qwen 2.5)';
+    if (_isLoaded) return 'Local Brain (Gemma 2B)';
+    return 'Scrappy Chef Logic';
+  }
 
   Future<void> initialize() async {
     _initFuture ??= _doInitialize();
@@ -68,12 +85,25 @@ class AiService {
     }
   }
 
-  Future<List<String>> generateRecipes(
+  Future<List<RecipeModel>> generateRecipes(
     List<PantryItem> items, {
     RecipeCategory category = RecipeCategory.meal,
     String? mealType,
     int count = 3,
   }) async {
+    // Check connectivity first to decide path
+    final connectivityResult = await _connectivity.checkConnectivity();
+    _isOnlineMode = connectivityResult == ConnectivityResult.mobile || 
+                    connectivityResult == ConnectivityResult.wifi || 
+                    connectivityResult == ConnectivityResult.ethernet;
+
+    if (_isOnlineMode) {
+      debugPrint('AiService: Internet detected. Preferring Online AI (OpenRouter).');
+      final onlineResults = await _generateOnlineRecipes(items, category: category, mealType: mealType, count: count);
+      if (onlineResults.isNotEmpty) return onlineResults;
+      debugPrint('AiService: Online generation failed or empty. Falling back to Local Brain.');
+    }
+
     await initialize();
     if (!_isLoaded || _engine == null) {
       return _getFallbackRecipes(items);
@@ -111,18 +141,24 @@ class AiService {
       
       For each option, provide:
       1. A unique recipe name
-      2. A brief 'Chef's Suggestion': Recommend ONE or TWO additional ingredients the user might not have that would elevate this specific dish to a premium level.
-      3. Precise preparation steps.
-      
-      Maintain a formal, professional, and highly detailed tone.
+      2. A brief 'Additional Needed Ingredients'
+      3. A Difficulty level (Easy, Medium, Hard)
+      4. Estimated Time in minutes
+      5. Precise preparation steps, organized into TITLED SECTIONS.
       
       Format each recipe separately as:
       ---RECIPE START---
+      ID: [Unique Short ID]
       RECIPE: [Name]
-      CHEF'S UPGRADE: [Proposed 1-2 extra ingredients and why]
-      INGREDIENTS: [List of available ingredients used + the upgrades]
-      STEPS: [Numbered List]
+      DIFFICULTY: [Easy|Medium|Hard]
       TIME: [Minutes]
+      ADDITIONAL NEEDED INGREDIENTS: [Proposed 1-2 extra ingredients]
+      INGREDIENTS: [List of available ingredients used]
+      STEPS:
+      STEP TITLE: [PHASE NAME, e.g., Preparation]
+      STEP DETAILS: [Detail 1], [Detail 2]
+      STEP TITLE: [PHASE NAME, e.g., Cooking]
+      STEP DETAILS: [Detail 1], [Detail 2]
       ---RECIPE END---
     """;
 
@@ -130,13 +166,55 @@ class AiService {
       final responseStream = _engine!.generateResponse(prompt);
       final fullResponse = await responseStream.join('');
       
-      // Split by marker
       final parts = fullResponse.split('---RECIPE START---')
           .where((p) => p.contains('---RECIPE END---'))
           .map((p) => p.split('---RECIPE END---').first.trim())
           .toList();
           
-      return parts.isNotEmpty ? parts : [fullResponse];
+      if (parts.isEmpty) {
+        return _getFallbackRecipes(items);
+      }
+
+      final results = parts.map((p) {
+        final id = _getPart(p, 'ID:');
+        final name = _getPart(p, 'RECIPE:');
+        final difficulty = _getPart(p, 'DIFFICULTY:');
+        final timeStr = _getPart(p, 'TIME:');
+        final upgrade = _getPart(p, 'ADDITIONAL NEEDED INGREDIENTS:');
+        
+        final steps = <RecipeStep>[];
+        final stepSections = p.split('STEP TITLE:').skip(1);
+        for (var section in stepSections) {
+          final title = section.split('STEP DETAILS:').first.trim();
+          final detailsPart = section.contains('STEP DETAILS:') 
+            ? section.split('STEP DETAILS:').last.split('STEP TITLE:').first.trim() 
+            : '';
+          final details = detailsPart.split(',')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
+          if (title.isNotEmpty) {
+            steps.add(RecipeStep(title: title, details: details));
+          }
+        }
+
+        // Auto-save logic: Every generated dish is automatically saved to the recipe book
+        final model = RecipeModel(
+          id: id.isNotEmpty ? id : Uuid().v4(),
+          name: name,
+          upgrade: upgrade,
+          ingredients: items,
+          steps: steps,
+          time: int.tryParse(timeStr.replaceAll(RegExp(r'[^0-9]'), '')) ?? 15,
+          difficulty: difficulty.isNotEmpty ? difficulty : 'Easy',
+        );
+
+        _autoSaveRecipe(model);
+
+        return model;
+      }).toList();
+
+      return results;
     } on ArgumentError catch (e) {
       debugPrint('AiService: Native FFI Error during generation: $e');
       return _getFallbackRecipes(items);
@@ -145,10 +223,141 @@ class AiService {
       return _getFallbackRecipes(items);
     }
   }
+  Future<List<RecipeModel>> _generateOnlineRecipes(
+    List<PantryItem> items, {
+    required RecipeCategory category,
+    String? mealType,
+    int count = 3,
+  }) async {
+    try {
+      final prompt = _buildPrompt(items, category, mealType, count);
 
-  List<String> _getFallbackRecipes(List<PantryItem> items) {
+      final response = await _dio.post(
+        ApiConfig.openRouterUrl,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${ApiConfig.openRouterApiKey}',
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://github.com/japhetcordova/PILO',
+            'X-Title': 'PILO AI',
+          },
+        ),
+        data: {
+          'model': ApiConfig.qwenModel,
+          'messages': [
+            {'role': 'system', 'content': 'You are a professional culinary AI.'},
+            {'role': 'user', 'content': prompt},
+          ],
+        },
+      );
+
+      final String fullResponse = response.data['choices'][0]['message']['content'];
+      return _parseRecipes(fullResponse, items);
+    } catch (e) {
+      debugPrint('AiService: Online generation error: $e');
+      return [];
+    }
+  }
+
+  String _buildPrompt(List<PantryItem> items, RecipeCategory category, String? mealType, int count) {
+    final itemNames = items.map((e) => e.name).join(', ');
+    final categoryName = category.name.toUpperCase();
+    final mealContext = mealType != null ? "This is specifically for a $mealType meal." : "";
+
+    return """
+      Based on: $itemNames, provide exactly $count distinct $categoryName recipes.
+      $mealContext
+      
+      Format each recipe separately as:
+      ---RECIPE START---
+      ID: [Unique Short ID]
+      RECIPE: [Name]
+      DIFFICULTY: [Easy|Medium|Hard]
+      TIME: [Minutes]
+      ADDITIONAL NEEDED INGREDIENTS: [Proposed 1-2 extra ingredients]
+      INGREDIENTS: [List of available ingredients used]
+      STEPS:
+      STEP TITLE: [PHASE NAME]
+      STEP DETAILS: [Detail 1], [Detail 2]
+      ---RECIPE END---
+    """;
+  }
+
+  List<RecipeModel> _parseRecipes(String fullResponse, List<PantryItem> items) {
+    final parts = fullResponse.split('---RECIPE START---')
+        .where((p) => p.contains('---RECIPE END---'))
+        .map((p) => p.split('---RECIPE END---').first.trim())
+        .toList();
+
+    return parts.map((p) {
+      final id = _getPart(p, 'ID:');
+      final name = _getPart(p, 'RECIPE:');
+      final difficulty = _getPart(p, 'DIFFICULTY:');
+      final timeStr = _getPart(p, 'TIME:');
+      final upgrade = _getPart(p, 'ADDITIONAL NEEDED INGREDIENTS:');
+      
+      final steps = <RecipeStep>[];
+      final stepSections = p.split('STEP TITLE:').skip(1);
+      for (var section in stepSections) {
+        final title = section.split('STEP DETAILS:').first.trim();
+        final detailsPart = section.contains('STEP DETAILS:') 
+          ? section.split('STEP DETAILS:').last.split('STEP TITLE:').first.trim() 
+          : '';
+        final details = detailsPart.split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+        if (title.isNotEmpty) {
+          steps.add(RecipeStep(title: title, details: details));
+        }
+      }
+
+      final model = RecipeModel(
+        id: id.isNotEmpty ? id : Uuid().v4(),
+        name: name,
+        upgrade: upgrade,
+        ingredients: items,
+        steps: steps,
+        time: int.tryParse(timeStr.replaceAll(RegExp(r'[^0-9]'), '')) ?? 15,
+        difficulty: difficulty.isNotEmpty ? difficulty : 'Easy',
+      );
+
+      _autoSaveRecipe(model);
+      return model;
+    }).toList();
+  }
+
+  void _autoSaveRecipe(RecipeModel model) async {
+    try {
+      final box = Hive.box<RecipeBookItem>('recipe_book');
+      final item = RecipeBookItem.fromModel(model);
+      await box.put(item.id, item);
+      debugPrint('AiService: Auto-saved ${model.name} to Recipe Book.');
+    } catch (e) {
+      debugPrint('AiService: Failed to auto-save recipe: $e');
+    }
+  }
+
+  String _getPart(String p, String marker) {
+    if (!p.contains(marker)) return '';
+    final start = p.indexOf(marker) + marker.length;
+    final end = _findNextMarker(p, start);
+    return p.substring(start, end).trim();
+  }
+
+  int _findNextMarker(String p, int start) {
+    final markers = ['ID:', 'RECIPE:', 'DIFFICULTY:', 'TIME:', 'ADDITIONAL NEEDED INGREDIENTS:', 'INGREDIENTS:', 'STEPS:', '---RECIPE END---'];
+    int next = p.length;
+    for (var m in markers) {
+      final idx = p.indexOf(m, start);
+      if (idx != -1 && idx < next) next = idx;
+    }
+    return next;
+  }
+
+  List<RecipeModel> _getFallbackRecipes(List<PantryItem> items) {
     if (items.isEmpty) {
-      return ["Sufficient ingredients are required to generate a recipe. Please add items to your inventory."];
+      return [];
     }
 
     // Determine available categories
@@ -171,16 +380,24 @@ class AiService {
       return bCovered.compareTo(aCovered);
     });
 
-    final results = matches.take(3).map((r) => r.toFormattedString(itemNames)).toList();
+    final results = matches.take(3).map((r) => r.toRecipeModel(items)).toList();
 
     if (results.isEmpty) {
       // Absolute fallback if no categories match (unlikely)
       return [
-        "RECIPE: Chef's Pantry Surprise\n"
-        "CHEF'S UPGRADE: A touch of salt and high heat.\n"
-        "INGREDIENTS: ${itemNames.join(', ')}\n"
-        "STEPS: 1. Sauté everything together until aromatic. 2. Serve immediately.\n"
-        "TIME: 10"
+        RecipeModel(
+          id: Uuid().v4(),
+          name: "Chef's Pantry Surprise",
+          upgrade: "A touch of salt and high heat.",
+          ingredients: items,
+          steps: [
+            RecipeStep(title: "Prep", details: ["Gather all ingredients."]),
+            RecipeStep(title: "Cook", details: ["Sauté everything together until aromatic."]),
+            RecipeStep(title: "Serve", details: ["Serve immediately."]),
+          ],
+          time: 10,
+          difficulty: 'Easy',
+        )
       ];
     }
 

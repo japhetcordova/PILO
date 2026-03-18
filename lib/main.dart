@@ -12,6 +12,9 @@ import 'features/sync/data/sync_service.dart';
 import 'features/inventory/presentation/settings_provider.dart';
 import 'shell/main_shell.dart';
 
+import 'features/recipe/domain/models/recipe_model.dart';
+import 'features/recipe/domain/models/recipe_book_item.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -22,12 +25,15 @@ void main() async {
   Hive.registerAdapter(CustomIngredientAdapter());
   Hive.registerAdapter(MealRecordAdapter());
   Hive.registerAdapter(WaterLogAdapter());
+  Hive.registerAdapter(RecipeStepAdapter());
+  Hive.registerAdapter(RecipeBookItemAdapter());
 
   // Safe box initialization with automatic self-healing
   await _safeOpenBox<PantryItem>('pantry_items');
   await _safeOpenBox<CustomIngredient>('custom_ingredients');
   await _safeOpenBox<MealRecord>('meal_records');
   await _safeOpenBox<WaterLog>('water_logs');
+  await _safeOpenBox<RecipeBookItem>('recipe_book');
   await _safeOpenBox('user_settings');
 
   // Initialize Sync Service for online enrichment

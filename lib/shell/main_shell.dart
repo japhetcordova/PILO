@@ -7,6 +7,7 @@ import '../features/recipe/presentation/recipe_decision_screen.dart';
 import '../features/tracking/presentation/track_tab.dart';
 import '../features/inventory/presentation/settings_screen.dart';
 import '../features/manual_input/presentation/manual_input_screen.dart';
+import '../features/recipe/presentation/meal_selection_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -20,7 +21,7 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _pages = [
     const InventoryScreen(), // We'll rename this to HomeTab internally later, or just keep the class name
-    const RecipeDecisionScreen(),
+    const MealSelectionScreen(),
     const TrackTab(),
     const SettingsScreen(),
   ];
